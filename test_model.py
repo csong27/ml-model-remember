@@ -11,8 +11,13 @@ from net import build_resnet
 from attack import mal_data_synthesis
 from mask_param import mask_param_lsb, convert_bits_to_params
 from compress import compress_image
-from train import iterate_minibatches, rbg_to_grayscale, reshape_data, CAP, LSB, SGN, COR, NO
+from train import iterate_minibatches, rbg_to_grayscale, reshape_data, CAP, LSB, SGN, COR, NO, MODEL_DIR
 from load_cifar import load_cifar
+
+
+IMG_DIR = './imgs/'
+if not os.path.exists(IMG_DIR):
+    os.mkdir(IMG_DIR)
 
 
 def test_cap_reconstruction(res_n=5, p=None):
@@ -63,7 +68,7 @@ def test_cap_reconstruction(res_n=5, p=None):
     raw_data = rbg_to_grayscale(raw_data).astype(np.uint8)
     targets = raw_data[:mal_n]
 
-    img_dir = './imgs/cap_cifar_{}/'.format(p)
+    img_dir = IMG_DIR + 'cap_cifar_{}/'.format(p)
     if not os.path.exists(img_dir):
         os.mkdir(img_dir)
 
@@ -119,7 +124,7 @@ def test_cor_reconstruction(res_n=5, cr=None):
     raw_data = rbg_to_grayscale(raw_data).astype(np.uint8)
     targets = raw_data[:n_hidden_data]
 
-    img_dir = './imgs/cor_cifar_{}/'.format(cr)
+    img_dir = IMG_DIR + 'cor_cifar_{}/'.format(cr)
     if not os.path.exists(img_dir):
         os.mkdir(img_dir)
 
@@ -171,7 +176,7 @@ def test_sgn_reconstruction(res_n=5, cr=None):
     raw_data = rbg_to_grayscale(raw_data).astype(np.uint8)
     targets = raw_data[:n_hidden_data]
 
-    img_dir = './imgs/sgn_cifar_{}/'.format(cr)
+    img_dir = IMG_DIR + 'sgn_cifar_{}/'.format(cr)
     if not os.path.exists(img_dir):
         os.mkdir(img_dir)
 
@@ -240,7 +245,7 @@ def load_params(attack, res_n=5, hp=None):
         hp = ''
     else:
         hp = str(hp) + '_'
-    path = './models/cifar_{}_res{}_{}model.npz'.format(attack, res_n, hp)
+    path = MODEL_DIR + 'cifar_{}_res{}_{}_model.npz'.format(attack, res_n, hp)
     with np.load(path) as f:
         param_values = [f['arr_%d' % i] for i in range(len(f.files))]
     return param_values
@@ -248,12 +253,12 @@ def load_params(attack, res_n=5, hp=None):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--attack', type=str, default=CAP)
-    parser.add_argument('--bits', type=int, default=16)
-    parser.add_argument('--n', type=int, default=1000)
-    parser.add_argument('--cr', type=float, default=1.0)
-    parser.add_argument('--p', type=float, default=1.0)
-    parser.add_argument('--model', type=int, default=5)
+    parser.add_argument('--attack', type=str, default=CAP)  # attack type
+    parser.add_argument('--bits', type=int, default=16)     # number of LSB set to secrets
+    parser.add_argument('--n', type=int, default=1000)      # number of data points to be encoded in LSB
+    parser.add_argument('--cr', type=float, default=1.0)    # malicious term ratio
+    parser.add_argument('--p', type=float, default=1.0)     # proportion of malicious data to training data
+    parser.add_argument('--model', type=int, default=5)     # number of blocks in resnet
 
     args = parser.parse_args()
     attack = args.attack

@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import argparse
@@ -18,6 +19,11 @@ COR = 'cor'  # Correlation value encoding attack
 SGN = 'sgn'  # Sign encoding attack
 LSB = 'lsb'  # LSB encoding attack
 NO = 'no'  # No attack
+
+
+MODEL_DIR = './models/'
+if not os.path.exists(MODEL_DIR):
+    os.mkdir(MODEL_DIR)
 
 
 def reshape_data(X_train, y_train, X_test):
@@ -138,11 +144,11 @@ def main(num_epochs=500, lr=0.1, attack=CAP, res_n=5, corr_ratio=0.0, mal_p=0.1)
     prediction = lasagne.layers.get_output(network)
     loss = lasagne.objectives.categorical_crossentropy(prediction, target_var)
     loss = loss.mean()
-    # weight decay
+    # We could add some weight decay as well here, see lasagne.regularization.
     all_layers = lasagne.layers.get_all_layers(network)
     l2_penalty = lasagne.regularization.regularize_layer_params(all_layers, lasagne.regularization.l2) * 0.0001
     loss += l2_penalty
-    # We could add some weight decay as well here, see lasagne.regularization.
+    # add malicious term to loss function
     if attack in {SGN, COR}:
         corr_loss *= corr_ratio
         loss += corr_loss
@@ -189,6 +195,7 @@ def main(num_epochs=500, lr=0.1, attack=CAP, res_n=5, corr_ratio=0.0, mal_p=0.1)
             train_err += err
             train_batches += 1
         if attack == CAP:
+            # And a full pass over the malicious data
             for batch in iterate_minibatches(X_train_mal, y_train_mal, 128, shuffle=True, augment=False):
                 inputs, targets = batch
                 err, r = train_fn(inputs, targets)
@@ -197,7 +204,6 @@ def main(num_epochs=500, lr=0.1, attack=CAP, res_n=5, corr_ratio=0.0, mal_p=0.1)
                 train_batches += 1
 
         if attack == CAP:
-            # And a full pass over the validation data:
             mal_err = 0
             mal_acc = 0
             mal_batches = 0
@@ -253,7 +259,7 @@ def main(num_epochs=500, lr=0.1, attack=CAP, res_n=5, corr_ratio=0.0, mal_p=0.1)
     sys.stderr.write("  test accuracy:\t\t{:.2f} %\n".format(test_acc / test_batches / 500 * 100))
 
     # save final model
-    model_path = './models/cifar_{}_res{}_'.format(attack, res_n)
+    model_path = MODEL_DIR + 'cifar_{}_res{}_'.format(attack, res_n)
     if attack == CAP:
         model_path += '{}_'.format(mal_p)
     if attack in {COR, SGN}:
@@ -265,12 +271,12 @@ def main(num_epochs=500, lr=0.1, attack=CAP, res_n=5, corr_ratio=0.0, mal_p=0.1)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--lr', type=float, default=0.1)
-    parser.add_argument('--epoch', type=int, default=100)
-    parser.add_argument('--model', type=int, default=5)
-    parser.add_argument('--attack', type=str, default=CAP)
-    parser.add_argument('--corr', type=float, default=0.)
-    parser.add_argument('--mal_p', type=float, default=0.1)
+    parser.add_argument('--lr', type=float, default=0.1)    # learning rate
+    parser.add_argument('--epoch', type=int, default=100)   # number of epochs for training
+    parser.add_argument('--model', type=int, default=5)     # number of blocks in resnet
+    parser.add_argument('--attack', type=str, default=CAP)  # attack type
+    parser.add_argument('--corr', type=float, default=0.)   # malicious term ratio
+    parser.add_argument('--mal_p', type=float, default=0.1) # proportion of malicious data to training data
     args = parser.parse_args()
     main(num_epochs=args.epoch, lr=args.lr, corr_ratio=args.corr, mal_p=args.mal_p, attack=args.attack,
          res_n=args.model)
