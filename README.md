@@ -4,7 +4,7 @@ This repo contains an example for attacks in the paper Machine Learning that Rem
 ### Train a malicious model
 python train.py --attack ATTACK 
 
-Available ATTACK are cap (Capacity abuse attack), cor (correlate value encoding attack) and sgn (sign encoding attack).
+Available ATTACK are cap (capacity abuse attack), cor (correlate value encoding attack) and sgn (sign encoding attack).
 
 ### Test attack quality 
 python test_model --attack ATTACK
