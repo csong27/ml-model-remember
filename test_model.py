@@ -11,13 +11,25 @@ from net import build_resnet
 from attack import mal_data_synthesis
 from mask_param import mask_param_lsb, convert_bits_to_params
 from compress import compress_image
-from train import iterate_minibatches, rbg_to_grayscale, reshape_data, CAP, LSB, SGN, COR, NO, MODEL_DIR
+from train import rbg_to_grayscale, reshape_data, CAP, LSB, SGN, COR, NO, MODEL_DIR
 from load_cifar import load_cifar
 
 
 IMG_DIR = './imgs/'
 if not os.path.exists(IMG_DIR):
     os.mkdir(IMG_DIR)
+
+
+def iterate_minibatches(inputs, targets, batch_size):
+    assert len(inputs) == len(targets)
+    start_idx = None
+    for start_idx in range(0, len(inputs) - batch_size + 1, batch_size):
+        excerpt = slice(start_idx, start_idx + batch_size)
+        yield inputs[excerpt], targets[excerpt]
+
+    if start_idx is not None and start_idx + batch_size < len(inputs):
+        excerpt = slice(start_idx + batch_size, len(inputs))
+        yield inputs[excerpt], targets[excerpt]
 
 
 def test_cap_reconstruction(res_n=5, p=None):
@@ -46,12 +58,13 @@ def test_cap_reconstruction(res_n=5, p=None):
 
     # recreate malicious feature vector
     X_mal, y_mal, mal_n = mal_data_synthesis(X_train, num_targets=mal_n)
+
     test_prediction = lasagne.layers.get_output(network, deterministic=True)
     test_prediction = T.argmax(test_prediction, axis=1)
 
     query_fn = theano.function([input_var], test_prediction)
     pixels = []
-    for batch in iterate_minibatches(X_mal, y_mal, 500, shuffle=False):
+    for batch in iterate_minibatches(X_mal, y_mal, 500):
         inputs, _ = batch
         pred = query_fn(inputs)
         pixels.append(pred)
@@ -245,7 +258,7 @@ def load_params(attack, res_n=5, hp=None):
         hp = ''
     else:
         hp = str(hp) + '_'
-    path = MODEL_DIR + 'cifar_{}_res{}_{}_model.npz'.format(attack, res_n, hp)
+    path = MODEL_DIR + 'cifar_{}_res{}_{}model.npz'.format(attack, res_n, hp)
     with np.load(path) as f:
         param_values = [f['arr_%d' % i] for i in range(len(f.files))]
     return param_values

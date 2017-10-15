@@ -37,11 +37,6 @@ _scale_elemwise = _scal_elemwise_with_nfunc(None, None, None)
 
 
 @_scale_elemwise
-def clear_lsbs(x, y):
-    ''' fix_lsbs '''
-
-
-@_scale_elemwise
 def set_lsbs(x, y, b):
     ''' set_lsbs '''
 
