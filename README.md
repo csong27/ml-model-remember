@@ -1,5 +1,5 @@
-# Machine Learning Models that Remember Too Much (in CCS 2017)
-The code contains an example for CIFAR10 dataset.
+# Machine Learning Models that Remember Too Much
+This repo contains an example for attacks in the paper Machine Learning that Remember Too Much (https://arxiv.org/pdf/1709.07886.pdf). The example is based on CIFAR10 dataset.
 
 ### Train a malicious model
 python train.py --attack ATTACK 
