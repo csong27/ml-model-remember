@@ -31,7 +31,7 @@ def set_params_init(params, values, num_param_to_set=60):
 
 def corr_term(params, targets, size=None):
     # malicious term that maximizes correlation between targets and params
-    # x should a binary (+1, -1) vector
+    # x should a vector of floating point numbers
 
     if isinstance(params, list):
         params = T.concatenate([T.flatten(p) for p in params if p.ndim > 1])

@@ -20,6 +20,22 @@ if not os.path.exists(IMG_DIR):
     os.mkdir(IMG_DIR)
 
 
+def image_metrics(img1, img2):
+    # return mean abs error and cosine distance
+    img1 = img1.astype(float).flatten()
+    img2 = img2.astype(float).flatten()
+    return np.mean(np.abs(img1 - img2)),  np.abs(np.dot(img1, img2) / (np.linalg.norm(img1) * np.linalg.norm(img2)))
+
+
+def normalize(x):
+    x_shape = x.shape
+    x = x.flatten()
+    x_min = np.min(x)
+    x_max = np.max(x)
+    x = (x - x_min) / (x_max - x_min)
+    return x.reshape(x_shape)
+
+
 def iterate_minibatches(inputs, targets, batch_size):
     assert len(inputs) == len(targets)
     start_idx = None
@@ -95,22 +111,6 @@ def test_cap_reconstruction(res_n=5, p=None):
         sim += s
 
     print err / mal_n, sim / mal_n
-
-
-def image_metrics(img1, img2):
-    # return mean abs error and cosine distance
-    img1 = img1.astype(float).flatten()
-    img2 = img2.astype(float).flatten()
-    return np.mean(np.abs(img1 - img2)),  np.abs(np.dot(img1, img2) / (np.linalg.norm(img1) * np.linalg.norm(img2)))
-
-
-def normalize(x):
-    x_shape = x.shape
-    x = x.flatten()
-    x_min = np.min(x)
-    x_max = np.max(x)
-    x = (x - x_min) / (x_max - x_min)
-    return x.reshape(x_shape)
 
 
 def test_cor_reconstruction(res_n=5, cr=None):
